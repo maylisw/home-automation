@@ -1,10 +1,10 @@
 name: Continuous Integration
 
 on:
-  push:
-    paths-ignore:
-      - "**/README.md"
-  pull_request:
+  # push:
+  #   paths-ignore:
+  #     - "**/README.md"
+  # pull_request:
   workflow_dispatch:
 
 env:
@@ -14,7 +14,7 @@ env:
 jobs:
   rust-checks:
     name: Rust Checks
-    runs-on: ubuntu-latest
+    runs-on: alpine-latest
     strategy:
       fail-fast: false
       matrix:
@@ -37,3 +37,4 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
+        working-directory: esp32-projects
