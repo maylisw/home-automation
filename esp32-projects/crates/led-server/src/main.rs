@@ -4,8 +4,8 @@ use std::{
 };
 
 use anyhow::{bail, Result};
-use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::prelude::Peripherals;
+use esp_idf_svc::{eventloop::EspSystemEventLoop, nvs::EspDefaultNvsPartition};
 use log::info;
 
 use rgb_led::{RGB8, WS2812RMT};
@@ -19,18 +19,20 @@ pub struct Config {
     wifi_psk: &'static str,
 }
 
+// TODO: refactor
+const HOSTNAME: Option<&'static str> = Some("espy");
+
 fn main() -> Result<()> {
     esp_idf_svc::sys::link_patches();
     esp_idf_svc::log::EspLogger::initialize_default();
 
     let peripherals = Peripherals::take().unwrap();
     let sysloop = EspSystemEventLoop::take()?;
-
-    info!("Hello, world!");
+    let nvs = EspDefaultNvsPartition::take()?;
 
     // Start the LED off yellow
     let mut led = WS2812RMT::new(peripherals.pins.gpio8, peripherals.rmt.channel0)?;
-    led.set_pixel(RGB8::new(50, 50, 0))?;
+    led.set_pixel(RGB8::new(0xff, 0xff, 0))?;
 
     let app_config = CONFIG;
 
@@ -38,26 +40,29 @@ fn main() -> Result<()> {
     let _wifi = match wifi(
         app_config.wifi_ssid,
         app_config.wifi_psk,
+        HOSTNAME,
         peripherals.modem,
         sysloop,
+        nvs,
     ) {
         Ok(inner) => {
-            //set green when connected to the wifi
+            // Green for success
             led.set_pixel(RGB8::new(0x0, 0xff, 0x0))?;
             inner
         }
         Err(err) => {
-            // Red!
+            // Red for failure
             led.set_pixel(RGB8::new(0xff, 0, 0))?;
             bail!("Could not connect to Wi-Fi network: {:?}", err)
         }
     };
 
     // TCP server
-    let ip = _wifi.sta_netif().get_ip_info()?.ip;
     let port = 1080;
-    let listener = TcpListener::bind(format!("{ip}:{port}"))?;
-    info!("Listening at {ip}:{port}");
+    let address = format!("{}:{port}", _wifi.sta_netif().get_ip_info()?.ip);
+
+    let listener = TcpListener::bind(&address)?;
+    info!("Listening at {address}");
 
     loop {
         let (mut stream, addr) = listener.accept()?;
