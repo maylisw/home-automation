@@ -1,0 +1,9 @@
+package(default_visibility = ["//visibility:public"])
+
+platform(
+    name = "esp32",
+    constraint_values = [
+        "@platforms//os:none",
+        "@platforms//cpu:riscv32",
+    ],
+)

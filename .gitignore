@@ -3,3 +3,5 @@
 target
 Cargo.lock
 cfg.toml
+**/bazel**
+**/MODULE.bazel.lock

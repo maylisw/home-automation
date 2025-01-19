@@ -1,0 +1,67 @@
+"""MODULE.bazel"""
+module(name = "home-automation", version = "0.0.0")
+
+########### BAZEL DEPENDENCIES ###########
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "rules_rust", version = "0.49.3")
+bazel_dep(name = "toolchains_llvm", version = "1.2.0", dev_dependency = True)
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+########### LLVM TOOLCHAIN ###########
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
+llvm.toolchain(
+    name = "llvm_toolchain",
+    llvm_versions = {
+        "": "16.0.0",
+        "darwin-x86_64": "15.0.7",  # For CI runner only; remove if you don't have an Intel Mac.
+    },
+    stdlib = {
+        "linux-aarch64": "stdc++",
+        "linux-x86_64": "stdc++",
+    },
+)
+
+# RISCV Sysroot
+# https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-tools.html#idf-tools-uninstall
+http_archive(
+    name = "sysroot_riscv32",
+    build_file = "//build/sysroot:BUILD.bazel",
+    sha256 = "fd7543ca97f4d971798b8323e1e7315e648dded4cf2c16a82c3093447b0358fa",
+    urls = ["https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20241119/riscv32-esp-elf-14.2.0_20241119-x86_64-apple-darwin.tar.xz"],
+)
+
+llvm.sysroot(
+    name = "llvm_toolchain",
+    label = "@sysroot_riscv32//:sysroot",
+    targets = ["esp32"],
+)
+
+use_repo(llvm, "llvm_toolchain")
+register_toolchains("@llvm_toolchain//:all", dev_dependency = True)
+
+########### RUST TOOLCHAIN ###########
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(edition = "2021", versions = ["nightly/2025-01-01"])
+
+use_repo(rust, "rust_toolchains")
+register_toolchains("@rust_toolchains//:all")
+
+########### RUST DEPENDENCIES ###########
+crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
+crate.from_cargo(
+    name = "crates",
+    cargo_config = "//:.cargo/config.toml",
+    cargo_lockfile = "//:Cargo.lock",
+    manifests = [
+        "//:Cargo.toml",
+        "//:crates/led-server/Cargo.toml",
+        "//:crates/rgb-led/Cargo.toml",
+        "//:crates/wifi/Cargo.toml",
+    ],
+)
+use_repo(crate, "crates")
+
+# crate_repos = use_extension("@crate_index//:defs.bzl", "crate_repositories")
+# use_repo(crate_repos, "crates_repositories")

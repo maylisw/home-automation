@@ -1,0 +1,32 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "led-server",
+    srcs = [
+        "src/main.rs",
+    ],
+    platform = "//build/platforms:esp32",
+    deps = [
+        "@crates//:anyhow",
+        "@crates//:esp-idf-svc",
+        "@crates//:log",
+    ],
+    proc_macro_deps = [
+        "@crates//:toml-cfg",
+    ],
+)
+
+# load("@crates//:def.bzl", "aliases", "all_crate_deps")
+# load("@rules_rust//rust:defs.bzl", "rust_binary")
+#
+# rust_binary(
+#     name = "led-server",
+#     srcs = glob([
+#         "src/**/*.rs",
+#     ]),
+#     aliases = aliases(),
+#     deps = all_crate_deps(),
+#     proc_macro_deps = all_crate_deps(
+#         proc_macro = True,
+#     ),
+# )
