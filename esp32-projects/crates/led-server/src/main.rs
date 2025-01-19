@@ -8,7 +8,7 @@ use esp_idf_svc::hal::prelude::Peripherals;
 use esp_idf_svc::{eventloop::EspSystemEventLoop, nvs::EspDefaultNvsPartition};
 use log::info;
 
-use rgb_led::{RGB8, WS2812RMT};
+use rgb_led::{Color, WS2812RMT};
 use wifi::wifi;
 
 #[toml_cfg::toml_config]
@@ -32,7 +32,7 @@ fn main() -> Result<()> {
 
     // Start the LED off yellow
     let mut led = WS2812RMT::new(peripherals.pins.gpio8, peripherals.rmt.channel0)?;
-    led.set_pixel(RGB8::new(0xff, 0xff, 0))?;
+    led.set_pixel(Color::Yellow)?;
 
     let app_config = CONFIG;
 
@@ -47,12 +47,12 @@ fn main() -> Result<()> {
     ) {
         Ok(inner) => {
             // Green for success
-            led.set_pixel(RGB8::new(0x0, 0xff, 0x0))?;
+            led.set_pixel(Color::Green)?;
             inner
         }
         Err(err) => {
             // Red for failure
-            led.set_pixel(RGB8::new(0xff, 0, 0))?;
+            led.set_pixel(Color::Red)?;
             bail!("Could not connect to Wi-Fi network: {:?}", err)
         }
     };
@@ -67,9 +67,9 @@ fn main() -> Result<()> {
     loop {
         let (mut stream, addr) = listener.accept()?;
         info!("Connected to {:#?}", addr);
-        stream.write(b"Welcome!\n")?;
+        stream.write_all(b"Welcome!\n Please type a color to change the LED. Supported colors are:\n - red\n - orange\n - yellow\n - green\n - cyan\n - blue\n - magenta\n - purple\n - pink\n - white\n - off\n- custom (format is r,g,b)\n")?;
 
-        let mut reader = BufReader::new(stream);
+        let mut reader = BufReader::new(&stream);
         let mut buf = String::new();
 
         while {
@@ -84,15 +84,17 @@ fn main() -> Result<()> {
         } {
             info!("recieved {:#?}", buf);
             let color = match buf.trim() {
-                "red" => RGB8::new(0xff, 0x0, 0x0),
-                "orange" => RGB8::new(0xff, 0x50, 0x0),
-                "yellow" => RGB8::new(0xff, 0xff, 0x0),
-                "green" => RGB8::new(0x0, 0xff, 0x0),
-                "blue" => RGB8::new(0x0, 0x0, 0xff),
-                "purple" => RGB8::new(0xff, 0x0, 0xff),
-                "violet" => RGB8::new(200, 0, 255),
-                "pink" => RGB8::new(199, 21, 133),
-                "white" => RGB8::new(0xff, 0xff, 0xff),
+                "red" => Color::Red,
+                "orange" => Color::Orange,
+                "yellow" => Color::Yellow,
+                "green" => Color::Green,
+                "cyan" => Color::Cyan,
+                "blue" => Color::Blue,
+                "magenta" => Color::Magenta,
+                "purple" => Color::Purple,
+                "pink" => Color::Pink,
+                "white" => Color::White,
+                "off" => Color::Off,
                 _ => match parse_rgb(&buf.trim()) {
                     Ok(res) => res,
                     Err(_) => {
@@ -107,11 +109,11 @@ fn main() -> Result<()> {
     }
 }
 
-fn parse_rgb(buf: &str) -> Result<RGB8> {
+fn parse_rgb(buf: &str) -> Result<Color> {
     let mut val = vec![];
     for i in buf.split(',') {
         info!("i is {i}");
         val.push(i.parse::<u8>()?);
     }
-    return Ok(RGB8::new(val[0], val[1], val[2]));
+    return Ok(Color::Custom(val[0], val[1], val[2]));
 }

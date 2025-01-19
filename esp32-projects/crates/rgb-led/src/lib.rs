@@ -12,6 +12,41 @@ pub struct WS2812RMT<'a> {
     tx_rtm_driver: TxRmtDriver<'a>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum Color {
+    Red,
+    Green,
+    Blue,
+    Yellow,
+    Cyan,
+    Magenta,
+    White,
+    Off,
+    Orange,
+    Purple,
+    Pink,
+    Custom(u8, u8, u8),
+}
+
+impl From<Color> for RGB8 {
+    fn from(color: Color) -> Self {
+        match color {
+            Color::Red => RGB8::new(0xff, 0x0, 0x0),
+            Color::Green => RGB8::new(0x0, 0xff, 0x0),
+            Color::Blue => RGB8::new(0x0, 0x0, 0xff),
+            Color::Yellow => RGB8::new(0xff, 0xff, 0x0),
+            Color::Cyan => RGB8::new(0x0, 0xff, 0xff),
+            Color::Magenta => RGB8::new(0xff, 0x0, 0xff),
+            Color::White => RGB8::new(0xff, 0xff, 0xff),
+            Color::Off => RGB8::new(0x0, 0x0, 0x0),
+            Color::Orange => RGB8::new(0xff, 0x32, 0x0),
+            Color::Purple => RGB8::new(0xc8, 0x0, 0xff),
+            Color::Pink => RGB8::new(0xc7, 0x15, 0x85),
+            Color::Custom(r, g, b) => RGB8::new(r, g, b),
+        }
+    }
+}
+
 impl<'d> WS2812RMT<'d> {
     // Rust ESP Board gpio2,  ESP32-C3-DevKitC-02 gpio8
     pub fn new(
@@ -23,7 +58,8 @@ impl<'d> WS2812RMT<'d> {
         Ok(Self { tx_rtm_driver: tx })
     }
 
-    pub fn set_pixel(&mut self, rgb: RGB8) -> Result<()> {
+    pub fn set_pixel(&mut self, color: Color) -> Result<()> {
+        let rgb = RGB8::from(color);
         let color: u32 = ((rgb.g as u32) << 16) | ((rgb.r as u32) << 8) | rgb.b as u32;
         let ticks_hz = self.tx_rtm_driver.counter_clock()?;
 
