@@ -1,0 +1,39 @@
+[package]
+name = "led-server"
+version = "0.0.0"
+edition.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "led-server"
+# do not use the built in cargo test harness -> resolve rust-analyzer errors
+harness = false
+
+# [profile.release]
+# opt-level.workspace = true
+#
+# [profile.dev]
+# debug.workspace = true
+# opt-level.workspace = true
+
+[features]
+default = []
+experimental = ["esp-idf-svc/experimental"]
+
+[dependencies]
+# external
+anyhow.workspace = true
+esp-idf-svc.workspace = true
+esp-idf-hal.workspace = true
+log.workspace = true
+toml-cfg.workspace = true
+
+# local
+rgb-led.workspace = true
+wifi.workspace = true
+
+[build-dependencies]
+embuild.workspace = true
+
+[lints]
+workspace = true
