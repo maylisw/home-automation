@@ -24,7 +24,6 @@ experimental = ["esp-idf-svc/experimental"]
 # external
 anyhow.workspace = true
 esp-idf-svc.workspace = true
-esp-idf-hal.workspace = true
 log.workspace = true
 toml-cfg.workspace = true
 
