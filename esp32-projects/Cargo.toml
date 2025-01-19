@@ -31,13 +31,23 @@ toml-cfg = "0.2.0"
 rgb-led = { path = "./crates/rgb-led" }
 wifi = { path = "./crates/wifi" }
 
-# todo: enable lints
+# See https://doc.rust-lang.org/rustc/lints/listing/index.html
+# for a full list or run `rustc -W help`
 [workspace.lints.rust]
+absolute_paths_not_starting_with_crate = "warn"
+bad-style = "warn"
 elided_lifetimes_in_paths = "warn"
 explicit_outlives_requirements = "warn"
+let-underscore = "warn"
+nonstandard-style = "warn"
 unsafe_op_in_unsafe_fn = "warn"
-unused_extern_crates = "warn"
+unused = "warn"
 unused_lifetimes = "warn"
 unreachable_pub = "warn"
 
-# [workspace.lints.clippy]
+# See https://doc.rust-lang.org/clippy/index.html
+[workspace.lints.clippy]
+nursery = "warn"
+pedantic = "warn"
+missing_errors_doc = {level="allow", priority=1}
+suspicious = "deny"

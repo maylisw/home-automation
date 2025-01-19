@@ -37,7 +37,7 @@ fn main() -> Result<()> {
     let app_config = CONFIG;
 
     // Connect to the Wi-Fi network
-    let _wifi = match wifi(
+    let esp_wifi = match wifi(
         app_config.wifi_ssid,
         app_config.wifi_psk,
         HOSTNAME,
@@ -59,7 +59,7 @@ fn main() -> Result<()> {
 
     // TCP server
     let port = 1080;
-    let address = format!("{}:{port}", _wifi.sta_netif().get_ip_info()?.ip);
+    let address = format!("{}:{port}", esp_wifi.sta_netif().get_ip_info()?.ip);
 
     let listener = TcpListener::bind(&address)?;
     info!("Listening at {address}");
@@ -95,13 +95,14 @@ fn main() -> Result<()> {
                 "pink" => Color::Pink,
                 "white" => Color::White,
                 "off" => Color::Off,
-                _ => match parse_rgb(&buf.trim()) {
-                    Ok(res) => res,
-                    Err(_) => {
+                _ => {
+                    if let Ok(res) = parse_rgb(buf.trim()) {
+                        res
+                    } else {
                         info!("{} is not a valid color. Try sending three comma seperated base10 values.", buf.trim());
                         continue;
                     }
-                },
+                }
             };
             led.set_pixel(color)?;
         }
@@ -115,5 +116,5 @@ fn parse_rgb(buf: &str) -> Result<Color> {
         info!("i is {i}");
         val.push(i.parse::<u8>()?);
     }
-    return Ok(Color::Custom(val[0], val[1], val[2]));
+    Ok(Color::Custom(val[0], val[1], val[2]))
 }

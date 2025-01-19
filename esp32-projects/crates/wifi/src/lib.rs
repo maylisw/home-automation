@@ -1,3 +1,4 @@
+//! crate wifi
 use anyhow::{bail, Result};
 use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
@@ -15,6 +16,9 @@ use esp_idf_svc::{
 };
 use log::info;
 
+/// # Panics
+///
+/// Will panic if hostname is longer than 30 characters
 pub fn wifi(
     ssid: &str,
     pass: &str,
