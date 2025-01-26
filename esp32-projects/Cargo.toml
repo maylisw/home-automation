@@ -3,7 +3,8 @@ resolver = "2"
 members = [
     "crates/led-server",
     "crates/rgb-led",
-    "crates/wifi"
+    "crates/wifi",
+	"crates/motor-controller-uln2003"
 ]
 
 [workspace.package]
@@ -21,6 +22,7 @@ opt-level = "z"
 # external
 anyhow = "1.0.94"
 embuild = "0.33.0"
+embedded-hal = "1.0.0"
 esp-idf-svc = "0.50.1"
 esp-idf-hal = { version = "=0.45.0", features = ["rmt-legacy"] }
 log = "0.4"
@@ -28,6 +30,7 @@ rgb = "0.8.50"
 toml-cfg = "0.2.0"
 
 # local
+motor-controller-uln2003 = { path = "./crates/motor-controller-uln2003" }
 rgb-led = { path = "./crates/rgb-led" }
 wifi = { path = "./crates/wifi" }
 
