@@ -35,6 +35,9 @@ jobs:
           - name: Compile
             command: build
             args: --release
+          - name: Taplo
+            command: install
+            args: taplo-cli --locked && taplo lint
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4

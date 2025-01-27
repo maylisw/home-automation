@@ -7,8 +7,8 @@ authors.workspace = true
 [dependencies]
 # external
 anyhow.workspace = true
-esp-idf-svc.workspace = true
 esp-idf-hal.workspace = true
+esp-idf-svc.workspace = true
 log.workspace = true
 rgb.workspace = true
 

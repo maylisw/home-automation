@@ -3,8 +3,8 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.package]
-edition = "2021"
 authors = ["Maÿlis Whetsel <maylisw31@gmail.com>"]
+edition = "2021"
 
 [profile.release]
 opt-level = "s"
@@ -16,10 +16,10 @@ opt-level = "z"
 [workspace.dependencies]
 # external
 anyhow = "1.0.94"
-embuild = "0.33.0"
 embedded-hal = "1.0.0"
-esp-idf-svc = "0.50.1"
+embuild = "0.33.0"
 esp-idf-hal = { version = "=0.45.0", features = ["rmt-legacy"] }
+esp-idf-svc = "0.50.1"
 log = "0.4"
 rgb = "0.8.50"
 toml-cfg = "0.2.0"
@@ -38,15 +38,15 @@ elided_lifetimes_in_paths = "warn"
 explicit_outlives_requirements = "warn"
 let-underscore = "warn"
 nonstandard-style = "warn"
-unsafe_op_in_unsafe_fn = "warn"
-unused = "warn"
-unused_must_use = "allow"
-unused_lifetimes = "warn"
 unreachable_pub = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused = { level = "warn", priority = -1 }
+unused_lifetimes = "warn"
+unused_must_use = "allow"
 
 # See https://doc.rust-lang.org/clippy/index.html
 [workspace.lints.clippy]
+missing_errors_doc = { level = "allow", priority = 1 }
 nursery = "warn"
 pedantic = "warn"
-missing_errors_doc = {level="allow", priority=1}
 suspicious = "deny"

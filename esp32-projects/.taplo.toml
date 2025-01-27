@@ -1,0 +1,26 @@
+include = ["**/*.toml"]
+
+[formatting]
+# See https://taplo.tamasfe.dev/configuration/formatter-options.html
+
+[[rule]]
+include = ["**/Cargo.toml", "Cargo.toml"]
+keys = [
+  "dependencies",
+  "*-dependencies",
+  "lints",
+  "workspace.dependencies",
+  "workspace.dev-dependencies",
+  "workspace.lints.rust",
+  "workspace.lints.clippy",
+]
+formatting = { "reorder_keys" = true }
+
+[[rule]]
+include = ["**/rustfmt.toml"]
+formatting = { reorder_keys = true }
+
+[[rule]]
+include = [".taplo.toml"]
+keys = ["formatting"]
+formatting = { "reorder_keys" = true }
