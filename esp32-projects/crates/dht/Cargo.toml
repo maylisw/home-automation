@@ -1,0 +1,23 @@
+[package]
+name = "dht"
+version = "0.0.0"
+edition.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "dht"
+harness = false
+
+[dependencies]
+embedded-hal.workspace = true
+
+# example binary
+anyhow.workspace = true
+esp-idf-svc.workspace = true
+log.workspace = true
+
+[build-dependencies]
+embuild.workspace = true
+
+[lints]
+workspace = true
