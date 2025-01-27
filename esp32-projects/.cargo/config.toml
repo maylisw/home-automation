@@ -3,7 +3,11 @@ target = "riscv32imac-esp-espidf"
 
 [target.riscv32imac-esp-espidf]
 linker = "ldproxy"
-runner = "espflash flash --monitor" # Select this runner for espflash v3.x.x
+# Select this runner for espflash v3.x.x
+runner = "espflash flash --monitor"
+# Extending time_t for ESP IDF 5: https://github.com/esp-rs/rust/issues/110
+rustflags = [ "--cfg",  "espidf_time64", "-C", "default-linker-libraries"]
+
 
 [unstable]
 build-std = ["std", "panic_abort"]
@@ -14,5 +18,5 @@ MCU="esp32c6"
 ESP_IDF_VERSION = "v5.2.2"
 ESP_IDF_TOOLS_INSTALL_DIR = { value = "global" }
 
-# Workaround for https://github.com/esp-rs/esp-idf-template/issues/174 
+# Workaround for https://github.com/esp-rs/esp-idf-template/issues/174
 CRATE_CC_NO_DEFAULTS = "1"
