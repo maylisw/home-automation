@@ -37,7 +37,7 @@ jobs:
             args: --release
           - name: Taplo
             command: install
-            args: taplo-cli --locked && taplo lint
+            args: taplo-cli --locked && taplo fmt --check
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
