@@ -1,9 +1,9 @@
-name: Continuous Integration
+name: Rust CI
 
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - "**/README.md"
   pull_request:
@@ -11,8 +11,12 @@ on:
 
 env:
   rust_toolchain: nightly
+  target: riscv32imac-esp-espidf
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ESP_IDF_VERSION: v5.2.2
+  ESP_IDF_SDKCONFIG_DEFAULTS: "${{ github.workspace }}/esp32-projects/sdkconfig.defaults"
+  RUSTFLAGS: "--cfg espidf_time64"
 
 jobs:
   rust-checks:
@@ -21,15 +25,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target:
-          - riscv32imac-esp-espidf
-        idf-version:
-          - v5.2.2
         action:
-          - command: build
+          - name: Fmt Check
+            command: fmt
+            args: --all -- --check --color always
+          - name: Clippy
+            command: clippy
+            args: --all-features --all-targets --no-deps --workspace -- -D warnings
+          - name: Compile
+            command: build
             args: --release
-          - command: clippy
-            args: --all-targets --all-features --workspace -- -D warnings
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
@@ -43,27 +48,14 @@ jobs:
       - name: Setup | Caching
         uses: Swatinem/rust-cache@v2
 
-      - name: Build | Fmt Check
-        run: cargo fmt --all -- --check --color always
-
-      - name: Build | Clippy
-        env:
-          ESP_IDF_VERSION: ${{ matrix.idf-version }}
-          ESP_IDF_SDKCONFIG_DEFAULTS: "${{ github.workspace }}/esp32-projects/sdkconfig.defaults"
-        run: cargo clippy --all-features --no-deps --workspace --target ${{ matrix.target }} -- -D warnings
-        working-directory: esp32-projects
-
       - name: Setup | ldproxy
         run: |
           curl -L https://github.com/esp-rs/embuild/releases/latest/download/ldproxy-x86_64-unknown-linux-gnu.zip -o $HOME/.cargo/bin/ldproxy.zip
           unzip "$HOME/.cargo/bin/ldproxy.zip" -d "$HOME/.cargo/bin/"
           chmod a+x $HOME/.cargo/bin/ldproxy
 
-      - name: Build | Compile
-        env:
-          ESP_IDF_VERSION: ${{ matrix.idf-version }}
-          ESP_IDF_SDKCONFIG_DEFAULTS: "${{ github.workspace }}/esp32-projects/sdkconfig.defaults"
-        run: cargo build --target ${{ matrix.target }}
+      - name: Build | ${{ matrix.action.name }}
+        run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
         working-directory: esp32-projects
 
       # - name: Build | Examples
