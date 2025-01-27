@@ -25,7 +25,7 @@ impl Reading {
     }
 
     pub fn fahrenheit(&self) -> f32 {
-        self.temperature * 1.8 + 32.0
+        self.temperature.mul_add(1.8, 32.0)
     }
 }
 
@@ -68,19 +68,18 @@ pub enum DhtError<HE> {
 
 impl<HE> From<HE> for DhtError<HE> {
     fn from(error: HE) -> Self {
-        DhtError::PinError(error)
+        Self::PinError(error)
     }
 }
 
 impl<HE: fmt::Debug> fmt::Display for DhtError<HE> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use DhtError::*;
+        use DhtError::{ChecksumMismatch, InvalidData, NotPresent, PinError, Timeout};
         match self {
             NotPresent => write!(f, "DHT device not found"),
             ChecksumMismatch(expected, calculated) => write!(
                 f,
-                "Data read was corrupt (expected checksum {:x}, calculated {:x})",
-                expected, calculated
+                "Data read was corrupt (expected checksum {expected}, calculated {calculated})",
             ),
             InvalidData => f.write_str("Received data is out of range"),
             Timeout => f.write_str("Timed out waiting for a read"),
@@ -99,7 +98,7 @@ pub trait InterruptControl {
     fn disable_interrupts(&mut self);
 }
 
-/// A dummy implementation of InterruptControl that does nothing
+/// A dummy implementation of `InterruptControl` that does nothing
 pub struct NoopInterruptControl;
 
 impl InterruptControl for NoopInterruptControl {
@@ -132,7 +131,7 @@ pub struct Dht<
 impl<HE, ID: InterruptControl, D: DelayNs, P: InputPin<Error = HE> + OutputPin<Error = HE>>
     Dht<HE, ID, D, P>
 {
-    fn new(interrupt_disabler: ID, delay: D, pin: P) -> Self {
+    const fn new(interrupt_disabler: ID, delay: D, pin: P) -> Self {
         Self {
             interrupt_disabler,
             delay,
@@ -190,7 +189,7 @@ impl<HE, ID: InterruptControl, D: DelayNs, P: InputPin<Error = HE> + OutputPin<E
         let expected = bytes[4];
         let actual = (bytes[0..=3]
             .iter()
-            .fold(0u16, |acc, next| acc + *next as u16)
+            .fold(0u16, |acc, next| acc + u16::from(*next))
             & 0xff) as u8;
         if expected != actual {
             return Err(DhtError::ChecksumMismatch(actual, expected));
@@ -198,13 +197,13 @@ impl<HE, ID: InterruptControl, D: DelayNs, P: InputPin<Error = HE> + OutputPin<E
         // END: checksum
 
         let (humidity, temperature) = parse_data(&bytes);
-        if !(0.0..=100.0).contains(&humidity) {
-            Err(DhtError::InvalidData)
-        } else {
+        if (0.0..=100.0).contains(&humidity) {
             Ok(Reading {
                 humidity,
                 temperature,
             })
+        } else {
+            Err(DhtError::InvalidData)
         }
     }
 
@@ -214,7 +213,7 @@ impl<HE, ID: InterruptControl, D: DelayNs, P: InputPin<Error = HE> + OutputPin<E
         level: PinState,
         on_timeout: DhtError<HE>,
     ) -> Result<u8, DhtError<HE>> {
-        for elapsed in 0..=core::u8::MAX {
+        for elapsed in 0..=u8::MAX {
             let is_ready = match level {
                 PinState::High => self.pin.is_high()?,
                 PinState::Low => self.pin.is_low()?,
@@ -244,14 +243,14 @@ pub struct Dht11<
 impl<HE, ID: InterruptControl, D: DelayNs, P: InputPin<Error = HE> + OutputPin<Error = HE>>
     Dht11<HE, ID, D, P>
 {
-    pub fn new(interrupt_disabler: ID, delay: D, pin: P) -> Self {
+    pub const fn new(interrupt_disabler: ID, delay: D, pin: P) -> Self {
         Self {
             dht: Dht::new(interrupt_disabler, delay, pin),
         }
     }
 
     fn parse_data(buf: &[u8]) -> (f32, f32) {
-        (buf[0] as f32, buf[2] as f32)
+        (f32::from(buf[0]), f32::from(buf[2]))
     }
 }
 
@@ -259,7 +258,7 @@ impl<HE, ID: InterruptControl, D: DelayNs, P: InputPin<Error = HE> + OutputPin<E
     DhtSensor<HE> for Dht11<HE, ID, D, P>
 {
     fn read(&mut self) -> Result<Reading, DhtError<HE>> {
-        self.dht.read(Dht11::<HE, ID, D, P>::parse_data)
+        self.dht.read(Self::parse_data)
     }
 }
 
@@ -278,15 +277,15 @@ pub struct Dht22<
 impl<HE, ID: InterruptControl, D: DelayNs, P: InputPin<Error = HE> + OutputPin<Error = HE>>
     Dht22<HE, ID, D, P>
 {
-    pub fn new(interrupt_disabler: ID, delay: D, pin: P) -> Self {
+    pub const fn new(interrupt_disabler: ID, delay: D, pin: P) -> Self {
         Self {
             dht: Dht::new(interrupt_disabler, delay, pin),
         }
     }
 
     fn parse_data(buf: &[u8]) -> (f32, f32) {
-        let humidity = (((buf[0] as u16) << 8) | buf[1] as u16) as f32 / 10.0;
-        let mut temperature = ((((buf[2] & 0x7f) as u16) << 8) | buf[3] as u16) as f32 / 10.0;
+        let humidity = f32::from((u16::from(buf[0]) << 8) | u16::from(buf[1])) / 10.0;
+        let mut temperature = f32::from((u16::from(buf[2] & 0x7f) << 8) | u16::from(buf[3])) / 10.0;
         if buf[2] & 0x80 != 0 {
             temperature = -temperature;
         }
@@ -298,6 +297,6 @@ impl<HE, ID: InterruptControl, D: DelayNs, P: InputPin<Error = HE> + OutputPin<E
     DhtSensor<HE> for Dht22<HE, ID, D, P>
 {
     fn read(&mut self) -> Result<Reading, DhtError<HE>> {
-        self.dht.read(Dht22::<HE, ID, D, P>::parse_data)
+        self.dht.read(Self::parse_data)
     }
 }

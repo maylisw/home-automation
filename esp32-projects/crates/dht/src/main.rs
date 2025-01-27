@@ -23,7 +23,7 @@ fn main() {
     loop {
         match dht.read() {
             Ok(res) => {
-                info!("DHT11 read: {res}")
+                info!("DHT11 read: {res}");
             }
             Err(err) => {
                 info!("error during read: {}", err);
