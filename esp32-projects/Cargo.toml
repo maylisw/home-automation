@@ -49,7 +49,7 @@ unused_must_use = "allow"
 inline_always = { level = "allow", priority = 1 }
 missing_errors_doc = { level = "allow", priority = 1 }
 must_use_candidate = { level = "allow", priority = 1 }
-uninlined_format_args = { level = "allow", priority = 1 }
 nursery = "warn"
 pedantic = "warn"
 suspicious = "deny"
+uninlined_format_args = { level = "allow", priority = 1 }
